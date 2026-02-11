@@ -6,6 +6,7 @@ import '../models/scan_item.dart';
 import '../providers/history_provider.dart';
 import 'result_screen.dart';
 
+/// A screen that uses the device camera to scan QR codes and barcodes.
 class ScannerScreen extends ConsumerStatefulWidget {
   const ScannerScreen({super.key});
 
@@ -14,15 +15,19 @@ class ScannerScreen extends ConsumerStatefulWidget {
 }
 
 class _ScannerScreenState extends ConsumerState<ScannerScreen> {
+  // Controller to manage camera state and barcode scanning.
   final MobileScannerController controller = MobileScannerController();
+  // Flag to prevent processing multiple barcodes simultaneously.
   bool _isScanning = true;
 
   @override
   void dispose() {
+    // Dispose of the controller to free up camera resources.
     controller.dispose();
     super.dispose();
   }
 
+  /// Processes a detected barcode: saves it to history and navigates to the result screen.
   Future<void> _processBarcode(String code, BarcodeFormat format) async {
     final scanItem = ScanItem(
       content: code,
@@ -32,18 +37,19 @@ class _ScannerScreenState extends ConsumerState<ScannerScreen> {
       category: _getCategory(code),
     );
 
-    // Save to history
+    // Save the scanned item to the persistent local history via the provider.
     await ref.read(historyProvider.notifier).addScan(scanItem);
 
     if (!mounted) return;
 
-    // Navigate to result
+    // Navigate to the result screen to show detailed information.
     await Navigator.push(
       context,
       MaterialPageRoute(builder: (context) => ResultScreen(item: scanItem)),
     );
   }
 
+  /// Callback function triggered whenever a barcode is detected by the camera.
   void _onDetect(BarcodeCapture capture) async {
     if (!_isScanning) return;
 
@@ -53,18 +59,22 @@ class _ScannerScreenState extends ConsumerState<ScannerScreen> {
       final String code = barcode.rawValue ?? "";
 
       if (code.isNotEmpty) {
+        // Pause detection while processing the current barcode.
         setState(() => _isScanning = false);
         await _processBarcode(code, barcode.format);
+        // Resume detection after returning from the result screen.
         setState(() => _isScanning = true);
       }
     }
   }
 
+  /// Allows the user to select an image from the gallery and scan it for barcodes.
   Future<void> _scanFromGallery() async {
     final picker = ImagePicker();
     final XFile? image = await picker.pickImage(source: ImageSource.gallery);
 
     if (image != null) {
+      // Analyze the selected image for barcodes.
       final barcodes = await controller.analyzeImage(image.path);
       if (barcodes != null && barcodes.barcodes.isNotEmpty) {
         final barcode = barcodes.barcodes.first;
@@ -74,6 +84,7 @@ class _ScannerScreenState extends ConsumerState<ScannerScreen> {
           await _processBarcode(code, barcode.format);
         }
       } else {
+        // Notify the user if no barcode was found in the selected image.
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text('No QR code found in image')),
@@ -83,6 +94,7 @@ class _ScannerScreenState extends ConsumerState<ScannerScreen> {
     }
   }
 
+  /// Categorizes the scanned content based on its prefix.
   String _getCategory(String content) {
     if (content.startsWith('http')) return 'URL';
     if (content.startsWith('WIFI:')) return 'WIFI';
@@ -98,16 +110,18 @@ class _ScannerScreenState extends ConsumerState<ScannerScreen> {
     return Scaffold(
       body: Stack(
         children: [
+          // The full-screen camera preview and detection widget.
           MobileScanner(controller: controller, onDetect: _onDetect),
-          // Viewfinder Overlay
+          // A semi-transparent overlay to help the user align the code.
           _buildViewfinder(context),
-          // Controls
+          // Camera control buttons (Gallery and Flash).
           _buildControls(context),
         ],
       ),
     );
   }
 
+  /// Builds the visual viewfinder overlay.
   Widget _buildViewfinder(BuildContext context) {
     return Center(
       child: Container(
@@ -115,22 +129,22 @@ class _ScannerScreenState extends ConsumerState<ScannerScreen> {
         height: 250,
         decoration: BoxDecoration(
           border: Border.all(
-            color: Theme.of(context).primaryColor.withValues(alpha: 0.5),
+            color: Theme.of(context).primaryColor.withAlpha(127),
             width: 2,
           ),
           borderRadius: BorderRadius.circular(20),
         ),
         child: Stack(
           children: [
-            // Corner Accents
+            // Corner indicators for the viewfinder.
             ..._buildCorners(context),
-            // Scanning Line Animation would go here
           ],
         ),
       ),
     );
   }
 
+  /// Generates the eight container widgets used to display the viewfinder corners.
   List<Widget> _buildCorners(BuildContext context) {
     const double length = 30;
     const double thickness = 4;
@@ -180,6 +194,7 @@ class _ScannerScreenState extends ConsumerState<ScannerScreen> {
     ];
   }
 
+  /// Builds the camera controls overlay (Gallery and Flash buttons).
   Widget _buildControls(BuildContext context) {
     return SafeArea(
       child: Padding(
@@ -196,7 +211,7 @@ class _ScannerScreenState extends ConsumerState<ScannerScreen> {
               ],
             ),
             const Spacer(),
-            Text(
+            const Text(
               'Align the code within the frame',
               style: TextStyle(
                 color: Colors.white,
@@ -211,9 +226,10 @@ class _ScannerScreenState extends ConsumerState<ScannerScreen> {
     );
   }
 
+  /// Helper widget to create circular, semi-transparent icon buttons.
   Widget _circularButton(IconData icon, VoidCallback onPressed) {
     return Container(
-      decoration: BoxDecoration(color: Colors.black54, shape: BoxShape.circle),
+      decoration: const BoxDecoration(color: Colors.black54, shape: BoxShape.circle),
       child: IconButton(
         icon: Icon(icon, color: Colors.white),
         onPressed: onPressed,

@@ -5,15 +5,35 @@ import 'package:url_launcher/url_launcher.dart';
 import 'package:intl/intl.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import '../models/scan_item.dart';
+import '../services/ad_service.dart';
 
-class ResultScreen extends StatelessWidget {
+class ResultScreen extends StatefulWidget {
   final ScanItem item;
 
   const ResultScreen({super.key, required this.item});
 
   @override
+  State<ResultScreen> createState() => _ResultScreenState();
+}
+
+class _ResultScreenState extends State<ResultScreen> {
+  final AdService _adService = AdService();
+
+  @override
+  void initState() {
+    super.initState();
+    _adService.loadInterstitialAd();
+  }
+
+  @override
+  void dispose() {
+    _adService.showInterstitialAd();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
-    bool isUrl = item.category == 'URL';
+    bool isUrl = widget.item.category == 'URL';
 
     return Scaffold(
       appBar: AppBar(
@@ -21,15 +41,13 @@ class ResultScreen extends StatelessWidget {
         actions: [
           IconButton(
             icon: const Icon(Icons.share),
-            onPressed: () => Share.share(item.content),
-          ),
-        ],
+            onPressed: () => SharePlus.instance.share(ShareParams(text: widget.item.content)),
+      )],
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(24.0),
         child: Column(
           children: [
-            // Header Card
             Container(
               width: double.infinity,
               padding: const EdgeInsets.all(24),
@@ -38,7 +56,7 @@ class ResultScreen extends StatelessWidget {
                 borderRadius: BorderRadius.circular(24),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.05),
+                    color: Colors.black.withAlpha(12),
                     blurRadius: 20,
                     offset: const Offset(0, 10),
                   ),
@@ -47,14 +65,14 @@ class ResultScreen extends StatelessWidget {
               child: Column(
                 children: [
                   Icon(
-                    _getCategoryIcon(item.category),
+                    _getCategoryIcon(widget.item.category),
                     size: 64,
                     color: Theme.of(context).primaryColor,
                   ),
                   const SizedBox(height: 16),
                   Text(
-                    item.category,
-                    style: TextStyle(
+                    widget.item.category,
+                    style: const TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.bold,
                       letterSpacing: 1.2,
@@ -62,12 +80,14 @@ class ResultScreen extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(height: 8),
-                  Text(
-                    item.content,
-                    textAlign: TextAlign.center,
-                    style: const TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.w600,
+                  SelectionArea(
+                    child: Text(
+                      widget.item.content,
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
                   ),
                   const SizedBox(height: 24),
@@ -75,7 +95,7 @@ class ResultScreen extends StatelessWidget {
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       _actionButton(context, 'Copy', Icons.copy, () {
-                        Clipboard.setData(ClipboardData(text: item.content));
+                        Clipboard.setData(ClipboardData(text: widget.item.content));
                         ScaffoldMessenger.of(context).showSnackBar(
                           const SnackBar(content: Text('Copied to clipboard')),
                         );
@@ -87,7 +107,7 @@ class ResultScreen extends StatelessWidget {
                           'Open',
                           Icons.open_in_browser,
                           () => launchUrl(
-                            Uri.parse(item.content),
+                            Uri.parse(widget.item.content),
                             mode: LaunchMode.inAppBrowserView,
                           ),
                         ),
@@ -98,7 +118,6 @@ class ResultScreen extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 24),
-            // Details Card
             Container(
               padding: const EdgeInsets.all(24),
               decoration: BoxDecoration(
@@ -107,16 +126,16 @@ class ResultScreen extends StatelessWidget {
               ),
               child: Column(
                 children: [
-                  _infoRow('Format', item.format),
+                  _infoRow('Format', widget.item.format),
                   const Divider(height: 32),
                   _infoRow(
                     'Date',
-                    DateFormat('MMM dd, yyyy').format(item.timestamp),
+                    DateFormat('MMM dd, yyyy').format(widget.item.timestamp),
                   ),
                   const Divider(height: 32),
                   _infoRow(
                     'Time',
-                    DateFormat('hh:mm a').format(item.timestamp),
+                    DateFormat('hh:mm a').format(widget.item.timestamp),
                   ),
                 ],
               ),

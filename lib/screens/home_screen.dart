@@ -5,6 +5,7 @@ import 'generate_screen.dart';
 import 'history_screen.dart';
 import 'settings_screen.dart';
 
+/// The main application container that handles navigation between the primary screens.
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
 
@@ -13,8 +14,10 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
+  // Keeps track of the currently selected tab in the bottom navigation bar.
   int _currentIndex = 0;
 
+  // The list of screens available for navigation.
   final List<Widget> _screens = [
     const ScannerScreen(),
     const GenerateScreen(),
@@ -25,13 +28,14 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      // Use IndexedStack to maintain the state of each screen while switching tabs.
       body: IndexedStack(index: _currentIndex, children: _screens),
       bottomNavigationBar: Container(
         decoration: BoxDecoration(
           color: Theme.of(context).colorScheme.surface,
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withValues(alpha: 0.1),
+              color: Colors.black.withAlpha(25),
               blurRadius: 10,
               offset: const Offset(0, -2),
             ),
@@ -39,6 +43,7 @@ class _HomeScreenState extends State<HomeScreen> {
         ),
         child: BottomNavigationBar(
           currentIndex: _currentIndex,
+          // Update the selected index when a tab is tapped.
           onTap: (index) => setState(() => _currentIndex = index),
           type: BottomNavigationBarType.fixed,
           backgroundColor: Colors.transparent,

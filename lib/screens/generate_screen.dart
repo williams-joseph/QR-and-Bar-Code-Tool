@@ -2,11 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'create_qr_input_screen.dart';
 
+/// A screen that displays a grid of different QR code types that the user can generate.
 class GenerateScreen extends StatelessWidget {
   const GenerateScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
+    // List of QR code categories with their labels, icons, and theme colors.
     final List<Map<String, dynamic>> items = [
       {'label': 'URL', 'icon': FontAwesomeIcons.link, 'color': Colors.blue},
       {
@@ -53,6 +55,7 @@ class GenerateScreen extends StatelessWidget {
           final item = items[index];
           return InkWell(
             onTap: () {
+              // Navigate to the input screen for the selected QR code type.
               Navigator.push(
                 context,
                 MaterialPageRoute(
@@ -68,7 +71,7 @@ class GenerateScreen extends StatelessWidget {
                 borderRadius: BorderRadius.circular(24),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.05),
+                    color: Colors.black.withAlpha(12),
                     blurRadius: 10,
                     offset: const Offset(0, 4),
                   ),
@@ -77,15 +80,17 @@ class GenerateScreen extends StatelessWidget {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
+                  // Icon with a light, colored background circle.
                   Container(
                     padding: const EdgeInsets.all(16),
                     decoration: BoxDecoration(
-                      color: item['color'].withValues(alpha: 0.1),
+                      color: (item['color'] as Color).withAlpha(25),
                       shape: BoxShape.circle,
                     ),
                     child: Icon(item['icon'], color: item['color'], size: 28),
                   ),
                   const SizedBox(height: 12),
+                  // Label for the QR code type.
                   Text(
                     item['label'],
                     style: const TextStyle(
